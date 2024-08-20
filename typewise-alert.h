@@ -39,4 +39,7 @@ private:
     static CoolingLimits getLimitsForCoolingType(CoolingType coolingType);
     static void sendToController(BreachType breachType);
     static void sendToEmail(BreachType breachType);
+
+    // Static method to initialize the cooling limits
+    static const CoolingLimits* getCoolingLimits();
 };
