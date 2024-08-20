@@ -1,16 +1,21 @@
-#include "typewise-alert.h"
+#include "typewise_alert.h"
 #include <stdio.h>
 
-const TypewiseAlert::CoolingLimits coolingLimits[] = {
-    {TypewiseAlert::CoolingType::PASSIVE_COOLING, 0, 35},
-    {TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 0, 45},
-    {TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, 0, 40},
-};
+// Initialize the static array of CoolingLimits inside the class
+const TypewiseAlert::CoolingLimits* TypewiseAlert::getCoolingLimits() {
+    static const CoolingLimits coolingLimits[] = {
+        {CoolingType::PASSIVE_COOLING, 0, 35},
+        {CoolingType::HI_ACTIVE_COOLING, 0, 45},
+        {CoolingType::MED_ACTIVE_COOLING, 0, 40},
+    };
+    return coolingLimits;
+}
 
 TypewiseAlert::CoolingLimits TypewiseAlert::getLimitsForCoolingType(CoolingType coolingType) {
-    for (const auto& limits : coolingLimits) {
-        if (limits.coolingType == coolingType) {
-            return limits;
+    const CoolingLimits* limits = getCoolingLimits();
+    for (int i = 0; i < 3; ++i) {
+        if (limits[i].coolingType == coolingType) {
+            return limits[i];
         }
     }
     // Default case: return 0, 0 limits if cooling type is unknown
