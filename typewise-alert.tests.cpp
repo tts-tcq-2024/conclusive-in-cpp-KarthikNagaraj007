@@ -16,17 +16,12 @@ std::string captureOutput(void (*func)(TypewiseAlert::BreachType), TypewiseAlert
 
 // Test classifyTemperatureBreach function
 TEST(TypewiseAlertTest, ClassifyTemperatureBreach) {
-    // Test PASSIVE_COOLING
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 34.0), TypewiseAlert::BreachType::NORMAL);
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 36.0), TypewiseAlert::BreachType::TOO_HIGH);
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, -1.0), TypewiseAlert::BreachType::TOO_LOW);
-
-    // Test HI_ACTIVE_COOLING
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 44.0), TypewiseAlert::BreachType::NORMAL);
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 46.0), TypewiseAlert::BreachType::TOO_HIGH);
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, -1.0), TypewiseAlert::BreachType::TOO_LOW);
-
-    // Test MED_ACTIVE_COOLING
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, 39.0), TypewiseAlert::BreachType::NORMAL);
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, 41.0), TypewiseAlert::BreachType::TOO_HIGH);
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, -1.0), TypewiseAlert::BreachType::TOO_LOW);
@@ -34,18 +29,24 @@ TEST(TypewiseAlertTest, ClassifyTemperatureBreach) {
 
 // Test sendToController function
 TEST(TypewiseAlertTest, SendToController) {
-    std::string output = captureOutput(TypewiseAlert::sendToController, TypewiseAlert::BreachType::TOO_HIGH);
+    std::string output = captureOutput([](TypewiseAlert::BreachType breachType) {
+        TypewiseAlert::sendToController(breachType);
+    }, TypewiseAlert::BreachType::TOO_HIGH);
     EXPECT_TRUE(output.find("feed") != std::string::npos);
     EXPECT_TRUE(output.find("1") != std::string::npos);
 }
 
 // Test sendToEmail function
 TEST(TypewiseAlertTest, SendToEmail) {
-    std::string output = captureOutput(TypewiseAlert::sendToEmail, TypewiseAlert::BreachType::TOO_HIGH);
+    std::string output = captureOutput([](TypewiseAlert::BreachType breachType) {
+        TypewiseAlert::sendToEmail(breachType);
+    }, TypewiseAlert::BreachType::TOO_HIGH);
     EXPECT_TRUE(output.find("To: a.b@c.com") != std::string::npos);
     EXPECT_TRUE(output.find("Hi, the temperature is too high") != std::string::npos);
 
-    output = captureOutput(TypewiseAlert::sendToEmail, TypewiseAlert::BreachType::NORMAL);
+    output = captureOutput([](TypewiseAlert::BreachType breachType) {
+        TypewiseAlert::sendToEmail(breachType);
+    }, TypewiseAlert::BreachType::NORMAL);
     EXPECT_TRUE(output.empty());
 }
 
@@ -53,14 +54,12 @@ TEST(TypewiseAlertTest, SendToEmail) {
 TEST(TypewiseAlertTest, CheckAndAlert) {
     TypewiseAlert::BatteryCharacter batteryChar = { TypewiseAlert::CoolingType::PASSIVE_COOLING, "BrandX" };
 
-    // Capture output for email alert
     std::string emailOutput = captureOutput([](TypewiseAlert::BreachType breachType) {
         TypewiseAlert::sendToEmail(breachType);
     }, TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 36.0));
     EXPECT_TRUE(emailOutput.find("To: a.b@c.com") != std::string::npos);
     EXPECT_TRUE(emailOutput.find("Hi, the temperature is too high") != std::string::npos);
 
-    // Capture output for controller alert
     std::string controllerOutput = captureOutput([](TypewiseAlert::BreachType breachType) {
         TypewiseAlert::sendToController(breachType);
     }, TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 36.0));
