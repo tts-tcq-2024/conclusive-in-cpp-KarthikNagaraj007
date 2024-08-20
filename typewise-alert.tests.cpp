@@ -1,7 +1,13 @@
-#include "typewise-alert.h"
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#include "typewise-alert.h"
 
-// Test to verify the classifyTemperatureBreach function for different cooling types
+class MockTypewiseAlert : public TypewiseAlert {
+public:
+    MOCK_METHOD(void, sendToController, (BreachType breachType), (override));
+    MOCK_METHOD(void, sendToEmail, (BreachType breachType), (override));
+};
+
 TEST(TypewiseAlertTest, ClassifyTemperatureBreach) {
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 25), TypewiseAlert::BreachType::NORMAL);
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 15), TypewiseAlert::BreachType::TOO_LOW);
@@ -14,38 +20,31 @@ TEST(TypewiseAlertTest, ClassifyTemperatureBreach) {
     EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, -5), TypewiseAlert::BreachType::TOO_LOW);
 }
 
-// Mocking a test for sending alerts to the controller
 TEST(TypewiseAlertTest, CheckAndAlertToController) {
-    // Redirect stdout to a stringstream to check output
-    testing::internal::CaptureStdout();
-    
+    MockTypewiseAlert mockAlert;
+
+    EXPECT_CALL(mockAlert, sendToController(TypewiseAlert::BreachType::TOO_HIGH))
+        .Times(1);
+
     TypewiseAlert::BatteryCharacter batteryChar = { TypewiseAlert::CoolingType::PASSIVE_COOLING, "BrandA" };
-    TypewiseAlert::checkAndAlert(TypewiseAlert::AlertTarget::TO_CONTROLLER, batteryChar, 50);
-    
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(output, "feed : 2\n");  // TOO_HIGH is expected to be 2
+    mockAlert.checkAndAlert(TypewiseAlert::AlertTarget::TO_CONTROLLER, batteryChar, 50);
 }
 
-// Mocking a test for sending alerts to email
 TEST(TypewiseAlertTest, CheckAndAlertToEmail) {
-    // Redirect stdout to a stringstream to check output
-    testing::internal::CaptureStdout();
-    
+    MockTypewiseAlert mockAlert;
+
+    EXPECT_CALL(mockAlert, sendToEmail(TypewiseAlert::BreachType::TOO_HIGH))
+        .Times(1);
+
     TypewiseAlert::BatteryCharacter batteryChar = { TypewiseAlert::CoolingType::PASSIVE_COOLING, "BrandA" };
-    TypewiseAlert::checkAndAlert(TypewiseAlert::AlertTarget::TO_EMAIL, batteryChar, 50);
-    
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(output, "To: a.b@c.com\nHi, the temperature is too high\n");
+    mockAlert.checkAndAlert(TypewiseAlert::AlertTarget::TO_EMAIL, batteryChar, 50);
 }
 
-// Test to ensure normal temperatures do not trigger alerts
 TEST(TypewiseAlertTest, NoAlertForNormalTemperature) {
-    // Redirect stdout to a stringstream to check output
-    testing::internal::CaptureStdout();
-    
+    MockTypewiseAlert mockAlert;
+
+    EXPECT_CALL(mockAlert, sendToEmail(::testing::_)).Times(0);
+
     TypewiseAlert::BatteryCharacter batteryChar = { TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, "BrandB" };
-    TypewiseAlert::checkAndAlert(TypewiseAlert::AlertTarget::TO_EMAIL, batteryChar, 40);
-    
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(output, "");  // Expect no output since temperature is normal
+    mockAlert.checkAndAlert(TypewiseAlert::AlertTarget::TO_EMAIL, batteryChar, 40);
 }
