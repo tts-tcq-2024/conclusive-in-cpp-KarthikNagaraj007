@@ -1,18 +1,37 @@
 #include "typewise-alert.h"
 #include <gtest/gtest.h>
+#include <tuple>
 
-// Test to verify the classifyTemperatureBreach function for different cooling types
-TEST(TypewiseAlertTest, ClassifyTemperatureBreach) {
-    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 25), TypewiseAlert::BreachType::NORMAL);
-    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 15), TypewiseAlert::BreachType::TOO_LOW);
-    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 35), TypewiseAlert::BreachType::TOO_HIGH);
+class ClassifyTemperatureBreachTest : public ::testing::TestWithParam<std::tuple<TypewiseAlert::CoolingType, double, TypewiseAlert::BreachType>> {
+};
 
-    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 40), TypewiseAlert::BreachType::NORMAL);
-    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 50), TypewiseAlert::BreachType::TOO_HIGH);
-
-    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, 20), TypewiseAlert::BreachType::NORMAL);
-    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, -5), TypewiseAlert::BreachType::TOO_LOW);
+TEST_P(ClassifyTemperatureBreachTest, ClassifyTemperatureBreach) {
+    TypewiseAlert::CoolingType coolingType;
+    double temperatureInC;
+    TypewiseAlert::BreachType expectedBreachType;
+    
+    std::tie(coolingType, temperatureInC, expectedBreachType) = GetParam();
+    
+    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(coolingType, temperatureInC), expectedBreachType);
 }
+
+INSTANTIATE_TEST_SUITE_P(
+    BreachClassificationTests,
+    ClassifyTemperatureBreachTest,
+    ::testing::Values(
+        std::make_tuple(TypewiseAlert::CoolingType::PASSIVE_COOLING, 15.0, TypewiseAlert::BreachType::TOO_LOW),
+        std::make_tuple(TypewiseAlert::CoolingType::PASSIVE_COOLING, 25.0, TypewiseAlert::BreachType::NORMAL),
+        std::make_tuple(TypewiseAlert::CoolingType::PASSIVE_COOLING, 40.0, TypewiseAlert::BreachType::TOO_HIGH),
+        
+        std::make_tuple(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, -5.0, TypewiseAlert::BreachType::TOO_LOW),
+        std::make_tuple(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 30.0, TypewiseAlert::BreachType::NORMAL),
+        std::make_tuple(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 50.0, TypewiseAlert::BreachType::TOO_HIGH),
+
+        std::make_tuple(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, 0.0, TypewiseAlert::BreachType::NORMAL),
+        std::make_tuple(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, -1.0, TypewiseAlert::BreachType::TOO_LOW),
+        std::make_tuple(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, 41.0, TypewiseAlert::BreachType::TOO_HIGH)
+    )
+);
 
 // Mocking a test for sending alerts to the controller
 TEST(TypewiseAlertTest, CheckAndAlertToController) {
