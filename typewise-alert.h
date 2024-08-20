@@ -42,4 +42,7 @@ private:
 
     // Static method to initialize the cooling limits
     static const CoolingLimits* getCoolingLimits();
+
+    // Allow the test class to access private members
+    friend class TypewiseAlertTest;
 };
