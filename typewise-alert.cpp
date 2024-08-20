@@ -1,4 +1,4 @@
-#include "typewise_alert.h"
+#include "typewise-alert.h"
 #include <stdio.h>
 
 // Initialize the static array of CoolingLimits inside the class
