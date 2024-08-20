@@ -1,66 +1,51 @@
-#include <gtest/gtest.h>
 #include "typewise-alert.h"
+#include <gtest/gtest.h>
 
-class TypewiseAlertTest : public ::testing::Test {
-protected:
-    // Setup code (if needed) goes here
-    void SetUp() override {
-        // Code to set up before each test case, if needed
-    }
+// Test to verify the classifyTemperatureBreach function for different cooling types
+TEST(TypewiseAlertTest, ClassifyTemperatureBreach) {
+    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 25), TypewiseAlert::BreachType::NORMAL);
+    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 15), TypewiseAlert::BreachType::TOO_LOW);
+    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 35), TypewiseAlert::BreachType::TOO_HIGH);
 
-    // Tear down code (if needed) goes here
-    void TearDown() override {
-        // Code to clean up after each test case, if needed
-    }
-};
+    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 40), TypewiseAlert::BreachType::NORMAL);
+    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, 50), TypewiseAlert::BreachType::TOO_HIGH);
 
-// Test for getLimitsForCoolingType
-TEST_F(TypewiseAlertTest, GetLimitsForCoolingType_ValidCoolingType) {
-    TypewiseAlert::CoolingLimits limits = TypewiseAlert::getLimitsForCoolingType(TypewiseAlert::CoolingType::PASSIVE_COOLING);
-    EXPECT_EQ(limits.coolingType, TypewiseAlert::CoolingType::PASSIVE_COOLING);
-    EXPECT_EQ(limits.lowerLimit, 0);
-    EXPECT_EQ(limits.upperLimit, 35);
+    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, 20), TypewiseAlert::BreachType::NORMAL);
+    EXPECT_EQ(TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::MED_ACTIVE_COOLING, -5), TypewiseAlert::BreachType::TOO_LOW);
 }
 
-TEST_F(TypewiseAlertTest, GetLimitsForCoolingType_UnknownCoolingType) {
-    TypewiseAlert::CoolingLimits limits = TypewiseAlert::getLimitsForCoolingType(static_cast<TypewiseAlert::CoolingType>(999)); // Invalid type
-    EXPECT_EQ(limits.coolingType, static_cast<TypewiseAlert::CoolingType>(999));
-    EXPECT_EQ(limits.lowerLimit, 0);
-    EXPECT_EQ(limits.upperLimit, 0);
+// Mocking a test for sending alerts to the controller
+TEST(TypewiseAlertTest, CheckAndAlertToController) {
+    // Redirect stdout to a stringstream to check output
+    testing::internal::CaptureStdout();
+    
+    TypewiseAlert::BatteryCharacter batteryChar = { TypewiseAlert::CoolingType::PASSIVE_COOLING, "BrandA" };
+    TypewiseAlert::checkAndAlert(TypewiseAlert::AlertTarget::TO_CONTROLLER, batteryChar, 50);
+    
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(output, "feed : 2\n");  // TOO_HIGH is expected to be 2
 }
 
-// Test for inferBreach
-TEST_F(TypewiseAlertTest, InferBreach_TooLow) {
-    TypewiseAlert::BreachType breach = TypewiseAlert::inferBreach(-10, 0, 35);
-    EXPECT_EQ(breach, TypewiseAlert::BreachType::TOO_LOW);
+// Mocking a test for sending alerts to email
+TEST(TypewiseAlertTest, CheckAndAlertToEmail) {
+    // Redirect stdout to a stringstream to check output
+    testing::internal::CaptureStdout();
+    
+    TypewiseAlert::BatteryCharacter batteryChar = { TypewiseAlert::CoolingType::PASSIVE_COOLING, "BrandA" };
+    TypewiseAlert::checkAndAlert(TypewiseAlert::AlertTarget::TO_EMAIL, batteryChar, 50);
+    
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(output, "To: a.b@c.com\nHi, the temperature is too high\n");
 }
 
-TEST_F(TypewiseAlertTest, InferBreach_TooHigh) {
-    TypewiseAlert::BreachType breach = TypewiseAlert::inferBreach(40, 0, 35);
-    EXPECT_EQ(breach, TypewiseAlert::BreachType::TOO_HIGH);
-}
-
-TEST_F(TypewiseAlertTest, InferBreach_Normal) {
-    TypewiseAlert::BreachType breach = TypewiseAlert::inferBreach(20, 0, 35);
-    EXPECT_EQ(breach, TypewiseAlert::BreachType::NORMAL);
-}
-
-// Test for classifyTemperatureBreach
-TEST_F(TypewiseAlertTest, ClassifyTemperatureBreach) {
-    TypewiseAlert::BreachType breach = TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 30);
-    EXPECT_EQ(breach, TypewiseAlert::BreachType::NORMAL);
-
-    breach = TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, 40);
-    EXPECT_EQ(breach, TypewiseAlert::BreachType::TOO_HIGH);
-
-    breach = TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType::PASSIVE_COOLING, -10);
-    EXPECT_EQ(breach, TypewiseAlert::BreachType::TOO_LOW);
-}
-
-// Test for checkAndAlert
-// Note: This test would involve checking side effects or output, which may require mocking or redirection of output.
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+// Test to ensure normal temperatures do not trigger alerts
+TEST(TypewiseAlertTest, NoAlertForNormalTemperature) {
+    // Redirect stdout to a stringstream to check output
+    testing::internal::CaptureStdout();
+    
+    TypewiseAlert::BatteryCharacter batteryChar = { TypewiseAlert::CoolingType::HI_ACTIVE_COOLING, "BrandB" };
+    TypewiseAlert::checkAndAlert(TypewiseAlert::AlertTarget::TO_EMAIL, batteryChar, 40);
+    
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(output, "");  // Expect no output since temperature is normal
 }
