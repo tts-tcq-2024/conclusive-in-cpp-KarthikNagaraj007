@@ -32,10 +32,8 @@ TypewiseAlert::BreachType TypewiseAlert::inferBreach(double value, double lowerL
     return BreachType::NORMAL;
 }
 
-TypewiseAlert::BreachType TypewiseAlert::classifyTemperatureBreach(TypewiseAlert::CoolingType coolingType, double temperatureInC) {
+TypewiseAlert::BreachType TypewiseAlert::classifyTemperatureBreach(CoolingType coolingType, double temperatureInC) {
     CoolingLimits limits = getLimitsForCoolingType(coolingType);
-    printf("Classifying breach: CoolingType: %d, Temperature: %.2f, LowerLimit: %d, UpperLimit: %d\n",
-           coolingType, temperatureInC, limits.lowerLimit, limits.upperLimit);
     return inferBreach(temperatureInC, limits.lowerLimit, limits.upperLimit);
 }
 
