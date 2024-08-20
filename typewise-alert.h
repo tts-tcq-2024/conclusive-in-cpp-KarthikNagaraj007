@@ -28,6 +28,11 @@ public:
     static BreachType classifyTemperatureBreach(CoolingType coolingType, double temperatureInC);
     static void checkAndAlert(AlertTarget alertTarget, const BatteryCharacter& batteryChar, double temperatureInC);
 
+protected:
+    // Allow mocking by making these methods virtual
+    virtual void sendToController(BreachType breachType);
+    virtual void sendToEmail(BreachType breachType);
+
 private:
     struct CoolingLimits {
         CoolingType coolingType;
@@ -37,9 +42,5 @@ private:
 
     static BreachType inferBreach(double value, double lowerLimit, double upperLimit);
     static CoolingLimits getLimitsForCoolingType(CoolingType coolingType);
-    static void sendToController(BreachType breachType);
-    static void sendToEmail(BreachType breachType);
-
-    // Static method to initialize the cooling limits
     static const CoolingLimits* getCoolingLimits();
 };
