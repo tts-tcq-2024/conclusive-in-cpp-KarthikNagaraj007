@@ -37,9 +37,6 @@ private:
 
     static BreachType inferBreach(double value, double lowerLimit, double upperLimit);
     static CoolingLimits getLimitsForCoolingType(CoolingType coolingType);
-    static const CoolingLimits* getCoolingLimits();
-    
-    // Make these methods static
     static void sendToController(BreachType breachType);
     static void sendToEmail(BreachType breachType);
 };
