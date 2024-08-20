@@ -27,6 +27,7 @@ public:
 
     static BreachType classifyTemperatureBreach(CoolingType coolingType, double temperatureInC);
     static void checkAndAlert(AlertTarget alertTarget, const BatteryCharacter& batteryChar, double temperatureInC);
+friend class TypewiseAlertTest;
 
 private:
     struct CoolingLimits {
