@@ -10,7 +10,6 @@ const TypewiseAlert::CoolingLimits* TypewiseAlert::getCoolingLimits() {
     };
     return coolingLimits;
 }
-
 TypewiseAlert::CoolingLimits TypewiseAlert::getLimitsForCoolingType(CoolingType coolingType) {
     const CoolingLimits* limits = getCoolingLimits();
     for (int i = 0; i < 3; ++i) {
@@ -31,17 +30,14 @@ TypewiseAlert::BreachType TypewiseAlert::inferBreach(double value, double lowerL
     }
     return BreachType::NORMAL;
 }
-
 TypewiseAlert::BreachType TypewiseAlert::classifyTemperatureBreach(CoolingType coolingType, double temperatureInC) {
     CoolingLimits limits = getLimitsForCoolingType(coolingType);
     return inferBreach(temperatureInC, limits.lowerLimit, limits.upperLimit);
 }
-
 void TypewiseAlert::sendToController(BreachType breachType) {
     const unsigned short header = 0xfeed;
     printf("%x : %x\n", header, static_cast<int>(breachType));
 }
-
 void TypewiseAlert::sendToEmail(BreachType breachType) {
     const char* recipient = "a.b@c.com";
     if (breachType != BreachType::NORMAL) {
@@ -49,10 +45,8 @@ void TypewiseAlert::sendToEmail(BreachType breachType) {
         printf("Hi, the temperature is %s\n", breachType == BreachType::TOO_LOW ? "too low" : "too high");
     }
 }
-
 void TypewiseAlert::checkAndAlert(AlertTarget alertTarget, const BatteryCharacter& batteryChar, double temperatureInC) {
     BreachType breachType = classifyTemperatureBreach(batteryChar.coolingType, temperatureInC);
-
     if (alertTarget == AlertTarget::TO_CONTROLLER) {
         sendToController(breachType);
     } else {
