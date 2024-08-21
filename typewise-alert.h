@@ -1,32 +1,45 @@
 #pragma once
+#include <string>
 
-typedef enum {
-  PASSIVE_COOLING,
-  HI_ACTIVE_COOLING,
-  MED_ACTIVE_COOLING
-} CoolingType;
+class TypewiseAlert {
+public:
+    enum class CoolingType {
+        PASSIVE_COOLING,
+        HI_ACTIVE_COOLING,
+        MED_ACTIVE_COOLING
+    };
 
-typedef enum {
-  NORMAL,
-  TOO_LOW,
-  TOO_HIGH
-} BreachType;
+    enum class BreachType {
+        NORMAL,
+        TOO_LOW,
+        TOO_HIGH
+    };
 
-BreachType inferBreach(double value, double lowerLimit, double upperLimit);
-BreachType classifyTemperatureBreach(CoolingType coolingType, double temperatureInC);
+    enum class AlertTarget {
+        TO_CONTROLLER,
+        TO_EMAIL
+    };
 
-typedef enum {
-  TO_CONTROLLER,
-  TO_EMAIL
-} AlertTarget;
+    struct BatteryCharacter {
+        CoolingType coolingType;
+        std::string brand;
+    };
 
-typedef struct {
-  CoolingType coolingType;
-  char brand[48];
-} BatteryCharacter;
+    static BreachType classifyTemperatureBreach(CoolingType coolingType, double temperatureInC);
+    static void checkAndAlert(AlertTarget alertTarget, const BatteryCharacter& batteryChar, double temperatureInC);
+    static BreachType inferBreach(double value, double lowerLimit, double upperLimit);
 
-void checkAndAlert(
-  AlertTarget alertTarget, BatteryCharacter batteryChar, double temperatureInC);
+private:
+    struct CoolingLimits {
+        CoolingType coolingType;
+        int lowerLimit;
+        int upperLimit;
+    };
+    
+    static CoolingLimits getLimitsForCoolingType(CoolingType coolingType);
+    static void sendToController(BreachType breachType);
+    static void sendToEmail(BreachType breachType);
 
-void sendToController(BreachType breachType);
-void sendToEmail(BreachType breachType);
+    // Static method to initialize the cooling limits
+    static const CoolingLimits* getCoolingLimits();
+};
