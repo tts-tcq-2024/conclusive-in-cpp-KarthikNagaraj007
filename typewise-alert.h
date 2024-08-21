@@ -27,6 +27,7 @@ public:
 
     static BreachType classifyTemperatureBreach(CoolingType coolingType, double temperatureInC);
     static void checkAndAlert(AlertTarget alertTarget, const BatteryCharacter& batteryChar, double temperatureInC);
+    static BreachType inferBreach(double value, double lowerLimit, double upperLimit);
 
 private:
     struct CoolingLimits {
@@ -34,8 +35,7 @@ private:
         int lowerLimit;
         int upperLimit;
     };
-
-    static BreachType inferBreach(double value, double lowerLimit, double upperLimit);
+    
     static CoolingLimits getLimitsForCoolingType(CoolingType coolingType);
     static void sendToController(BreachType breachType);
     static void sendToEmail(BreachType breachType);
